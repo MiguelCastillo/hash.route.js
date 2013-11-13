@@ -2,7 +2,7 @@ hash.js, a simple and flexible routing system.
 ====
 
 
-1. Exact match.<br>
+1) Exact match.<br>
 Will match exact urls. E.g.
 
 ``` javascript
@@ -13,7 +13,7 @@ hash("home").on("change", function(evt) {
 });
 ```
 
-2. : parameters.<br>
+2) : parameters.<br>
 Will match the url patterns, extracting the parameter values which are then returned. E.g.
 
 ``` javascript
@@ -23,7 +23,7 @@ hash("home/u:val1/test/:val2").on("change", function(evt, val1, val2) {
 });
 ```
 
-3. /* optional parameters<br>
+3) /* optional parameters<br>
 Will match patterns returning whatever parameters are found. If a paramter isn't found, the match is will be successfull but the unmatched data isn't returned. E.g.
 
 ``` javascript
@@ -35,7 +35,7 @@ hash("home/*:val1/*:val2").on("change", function(evt) {
 });
 ```
 
-4. /** Wild card<br>
+4) /** Wild card<br>
 Will match anything
 
 ``` javascript
