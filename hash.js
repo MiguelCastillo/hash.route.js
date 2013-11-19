@@ -7,12 +7,13 @@
 (function(factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
-    define(['jquery'], factory);
+    define(["jquery"], factory);
   } else {
     // Browser globals
     factory(this.$);
   }
-})(function( $ ) {
+})
+(function( $ ) {
   "use strict";
 
   var wildCard = /\/\*\*/g,
@@ -135,7 +136,7 @@
   // Rate at which to trigger updates whenever they exist
   hash.refreshRate = 100;
 
-  
+
   //
   // Enable the entire hashing operation
   //
@@ -174,6 +175,14 @@
   };
 
 
+  //
+  // Allow navigation from hash
+  //
+  hash.navigate = function(route) {
+    window.location.hash = route;
+  };
+
+
   // Routine to process haschange events
   function hashchanged () {
     newHash = '' + window.location.hash;
@@ -208,7 +217,7 @@
     if ( throttle ) {
       clearTimeout(throttle);
     }
-    
+
     throttle = setTimeout(hashchanged, hash.refreshRate);
   }
 
