@@ -22,7 +22,8 @@
       newHash = "",
       interval = false,
       throttle = false,
-      hashes = [];
+      hashes = {};
+
 
   //
   // Hash handler
@@ -35,6 +36,15 @@
       };
     }
 
+    if ( options.pattern in hashes === false ) {
+      hashes[options.pattern] = hash.factory(options);
+    }
+
+    return hashes[options.pattern];
+  }
+
+
+  hash.factory = function(options) {
     var instance = $({});
 
     //
@@ -93,10 +103,7 @@
 
 
     function unregister() {
-      var index = hashes.indexOf(instance);
-      if ( index !== -1 ) {
-        hashes.splice(index, 1);
-      }
+      delete hashes[instance.pattern];
     }
 
 
@@ -110,31 +117,41 @@
     }
 
 
+    //
+    // Override the $.on method to subscribe events so that we can properly
+    // handle firing off an event with the initial value when event handlers
+    // are registered.
+    //
+    var _onEvent = instance.on;
+    function onEvent(evt, selector, func) {
+      if (typeof selector === "function") {
+        func = selector;
+      }
+
+      _onEvent.apply(instance, arguments);
+      instance._lastUpdate = '' + window.location.hash;
+      var matches = instance.match(instance._lastUpdate);
+      if (matches) {
+        matches.unshift( jQuery.Event( "init" ) );
+        func.apply(instance, matches);
+      }
+
+      return instance;
+    }
+
+
     instance.match = match;
     instance.unregister = unregister;
     instance.enable = enable;
-    hashes.push(instance);
-
-
-    // Let's initialize the instance.  This is important when we want
-    // the registration process to trigger an update when initializing
-    // the route.
-    if ( options.init !== false ) {
-      setTimeout(function() {
-        instance._lastUpdate = '' + window.location.hash;
-        var matches = instance.match(instance._lastUpdate);
-        if (matches) {
-          instance.trigger("change", matches);
-        }
-      }, 1);
-    }
+    instance.pattern = options.pattern;
+    instance.on = onEvent;
 
     return instance;
-  }
+  };
 
 
   // Rate at which to trigger updates whenever they exist
-  hash.refreshRate = 100;
+  hash.refreshRate = 1;
 
 
   //
@@ -191,13 +208,10 @@
     }
 
     oldHash = newHash;
-    var _hashes = hashes.slice(0),
-        _index = 0,
-        _length = _hashes.length;
 
     // Iterate through all the hashes and fire off a change event if needed.
-    for(; _index < _length; _index++) {
-      var _hash = _hashes[_index];
+    for( var i in hashes ) {
+      var _hash = hashes[i];
       if ( _hash._lastUpdate === newHash ) {
         continue;
       }
