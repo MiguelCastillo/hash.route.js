@@ -22,8 +22,12 @@
         "regex":/\/\*\*/g,
         "rule": "(?:.*)"
       },
+      wholeValue = {
+        "regex":/\*\*:\w+/g,
+        "rule": "(.*)"
+      },
       optionalValue = {
-        "regex": /\*:\w+/g,
+        "regex": /\*\w*:\w+/g,
         "rule": "([^/]*)"
       },
       nameValue = {
@@ -64,6 +68,7 @@
     // Regex tester: http://jsregex.com/
     //
     var matchString = ('' + options.pattern)
+      .replace(wholeValue.regex, wholeValue.rule)
       .replace(wildCard.regex, wildCard.rule)
       .replace(optionalValue.regex, function(match) {
         return match.substr(0, match.indexOf(':')) + optionalValue.rule;
