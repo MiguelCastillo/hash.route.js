@@ -1,8 +1,15 @@
 hash.js, a simple and flexible routing system.
 ====
 
+1) Empty match.<br>
+``` javascript
+// Match empty route
+hash("").on("change", function(evt) {
+  console.log(arguments);
+});
+```
 
-1) Exact match.<br>
+2) Exact match.<br>
 Will match exact urls. E.g.
 
 ``` javascript
@@ -13,29 +20,41 @@ hash("home").on("change", function(evt) {
 });
 ```
 
-2) : parameters.<br>
-Will match the url patterns, extracting the parameter values which are then returned. E.g.
+3) : parameter values.<br>
+Will match the url patterns, extracting and returning the parameter values. E.g.
 
 ``` javascript
-// home/u21/test/age -> val1 = 21, val2 = age
-hash("home/u:val1/test/:val2").on("change", function(evt, val1, val2) {
-  console.log(val1, val2);
-});
-```
-
-3) /* optional parameters<br>
-Will match patterns returning whatever parameters are found. If a paramter isn't found, the match is will be successfull but the unmatched data isn't returned. E.g.
-
-``` javascript
-// home -> val1 = "", val2 = ""
-// home/magic -> val1 = "magic", val2 = ""
-// home/magic/books -> val1 = "magic", val2 = "books"
-hash("home/*:val1/*:val2").on("change", function(evt) {
+// home/u21/age -> val1 = 21, val2 = age
+hash("home/u:val1/:val2").on("change", function(evt, val1, val2) {
   console.log(arguments);
 });
 ```
 
-4) /** Wild card<br>
+4) *: optional parameter values.<br>
+Will match patterns returning whatever parameters are found. If a paramter isn't found, the match is will be successfull but the unmatched data isn't returned. E.g.
+
+``` javascript
+// home -> val1 = "", val2 = ""
+// home/umagic -> val1 = "magic", val2 = ""
+// home/umagic/books -> val1 = "magic", val2 = "books"
+hash("home/*u:val1/*:val2").on("change", function(evt) {
+  console.log(arguments);
+});
+```
+
+5) **: whole parameter value.<br>
+Will return the whole paramater. E.g.<br>
+
+``` javascript
+// home -> val1 = "", val2 = ""
+// home/magic -> val1 = "magic"
+// home/magic/books -> val1 = "magic/books"
+hash("home/**:val1").on("change", function(evt) {
+  console.log(arguments);
+});
+```
+
+6) /** Wild card<br>
 Will match anything
 
 ``` javascript
