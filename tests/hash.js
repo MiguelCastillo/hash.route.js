@@ -29,7 +29,7 @@ define(function(require, exports, module) {
   });
 
 
-  // /* optional parameters value
+  // *: optional parameter values
   // Will return val1 if it exists, and will return val2 if it exists. E.g.
   // home -> val1 = "", val2 = ""
   // home/magic -> val1 = "magic", val2 = ""
