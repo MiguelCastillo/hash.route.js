@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Miguel Castillo.
  * Licensed under MIT
+ *
+ * https://github.com/MiguelCastillo/hash.js
  */
 
 
@@ -16,12 +18,22 @@
 (function( $ ) {
   "use strict";
 
-  var wildCard = /\/\*\*/g,
-      nameValue = /\w*:\w+/g,
+  var wildCard = {
+        "regex":/\/\*\*/g,
+        "rule": "(?:.*)"
+      },
+      optionalValue = {
+        "regex": /\*:\w+/g,
+        "rule": "([^/]*)"
+      },
+      nameValue = {
+        "regex": /\w*:\w+/g,
+        "rule": "([^/]+)"
+      },
       oldHash = "",
       newHash = "",
+      enabled = false,
       interval = false,
-      throttle = false,
       hashes = {};
 
 
@@ -37,14 +49,14 @@
     }
 
     if ( options.pattern in hashes === false ) {
-      hashes[options.pattern] = hash.factory(options);
+      hashes[options.pattern] = hash.route(options);
     }
 
     return hashes[options.pattern];
   }
 
 
-  hash.factory = function(options) {
+  hash.route = function(options) {
     var instance = $({});
 
     //
@@ -52,18 +64,12 @@
     // Regex tester: http://jsregex.com/
     //
     var matchString = ('' + options.pattern)
-      .replace(wildCard, "(?:.*)")
-      .replace(nameValue, function(match) {
-        if ( match.charAt(0) === ':' ) {
-          //return "([\\w]*)";
-          //return "(.*?)";
-          return "([^/]*)";
-        }
-        else {
-          //return match.substr(0, match.indexOf(':')) + "([\\w]*)";
-          //return match.substr(0, match.indexOf(':')) + "(.*?)";
-          return match.substr(0, match.indexOf(':')) + "([^/]*)";
-        }
+      .replace(wildCard.regex, wildCard.rule)
+      .replace(optionalValue.regex, function(match) {
+        return match.substr(0, match.indexOf(':')) + optionalValue.rule;
+      })
+      .replace(nameValue.regex, function(match) {
+        return match.substr(0, match.indexOf(':')) + nameValue.rule;
       });
 
 
@@ -94,7 +100,7 @@
       if ( _match ) {
         // The regex match logic will put the match input in the beginning
         // of the array.  So, remove it to have a precise 1:1 match with
-        // the parameters matched and returned to the callbacks
+        // the parameters returned to the callbacks
         instance._lastMatch = _match.shift();
       }
 
@@ -129,11 +135,13 @@
       }
 
       _onEvent.apply(instance, arguments);
-      instance._lastUpdate = '' + window.location.hash;
-      var matches = instance.match(instance._lastUpdate);
+
+      var matches = instance.match('' + window.location.hash);
       if (matches) {
         matches.unshift( jQuery.Event( "init" ) );
-        func.apply(instance, matches);
+        setTimeout(function() {
+          func.apply(instance, matches);
+        }, 1);
       }
 
       return instance;
@@ -145,29 +153,30 @@
     instance.enable = enable;
     instance.pattern = options.pattern;
     instance.on = onEvent;
-
     return instance;
   };
 
 
   // Rate at which to trigger updates whenever they exist
-  hash.refreshRate = 1;
+  hash.refreshRate = 10;
 
 
   //
   // Enable the entire hashing operation
   //
   hash.enable = function(val) {
-    if ( interval ) {
+    if ( enabled ) {
       return;
     }
+
+    enabled = true;
 
     if ( "onhashchange" in self ) {
       $(self).on("hashchange", throttlechange);
       interval = setTimeout(hashchanged, hash.refreshRate);
     }
     else {
-      interval = setInterval(hashchanged, hash.refreshRate);
+      interval = setInterval(hashchanged, 100);
     }
   };
 
@@ -176,18 +185,18 @@
   // Disable the entire hashing operation
   //
   hash.disable = function(val) {
-    if ( interval === false ) {
+    if ( enabled === false ) {
       return;
     }
+
+    enabled = false;
 
     if ( "onhashchange" in self ) {
       $(self).off("hashchange", hashchanged);
       clearTimeout(interval);
-      interval = false;
     }
     else {
       clearInterval(interval);
-      interval = false;
     }
   };
 
@@ -228,11 +237,11 @@
   // Throttle update events to prevent flooding the hashchanged handler with
   // messages.
   function throttlechange() {
-    if ( throttle ) {
-      clearTimeout(throttle);
+    if ( interval ) {
+      clearTimeout(interval);
     }
 
-    throttle = setTimeout(hashchanged, hash.refreshRate);
+    interval = setTimeout(hashchanged, hash.refreshRate);
   }
 
 
