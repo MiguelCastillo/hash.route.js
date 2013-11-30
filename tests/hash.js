@@ -14,8 +14,19 @@ define(function(require, exports, module) {
   // Exact match
   // Will match only if home is the only parameter in the url. E.g.
   // home, will match
+  // /home/, will match
   // home/sweet, will not match
   hash("home").on("change", function(evt) {
+    console.log(arguments);
+  });
+
+
+  // Exact match and trailing slash
+  // Will match only if home is the only parameter in the url. E.g.
+  // home, will not match
+  // home/, will match
+  // home/sweet, will not match
+  hash("home/").on("change", function(evt) {
     console.log(arguments);
   });
 
@@ -34,7 +45,7 @@ define(function(require, exports, module) {
   // home -> val1 = "", val2 = ""
   // home/magic -> val1 = "magic", val2 = ""
   // home/magic/books -> val1 = "magic", val2 = "books"
-  hash("home/*u:val1/*:val2").on("change", function(evt) {
+  hash("home/*u:val1/*:val2").on("change", function(evt, val1, val2) {
     console.log(arguments);
   });
 
@@ -44,7 +55,7 @@ define(function(require, exports, module) {
   // home -> val1 = "", val2 = ""
   // home/magic -> val1 = "magic"
   // home/magic/books -> val1 = "magic/books"
-  hash("home/**:val1").on("change", function(evt) {
+  hash("home/**u:val1").on("change", function(evt) {
     console.log(arguments);
   });
 

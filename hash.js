@@ -23,7 +23,7 @@
         "rule": "(?:.*)"
       },
       wholeValue = {
-        "regex":/\*\*:\w+/g,
+        "regex":/\*\*\w*:\w+/g,
         "rule": "(.*)"
       },
       optionalValue = {
@@ -68,15 +68,16 @@
     // Regex tester: http://jsregex.com/
     //
     var matchString = ('' + options.pattern)
-      .replace(wholeValue.regex, wholeValue.rule)
-      .replace(wildCard.regex, wildCard.rule)
+      .replace(wholeValue.regex, function(match) {
+        return match.substr(0, match.indexOf(':')) + wholeValue.rule;
+      })
       .replace(optionalValue.regex, function(match) {
         return match.substr(0, match.indexOf(':')) + optionalValue.rule;
       })
       .replace(nameValue.regex, function(match) {
         return match.substr(0, match.indexOf(':')) + nameValue.rule;
-      });
-
+      })
+      .replace(wildCard.regex, wildCard.rule);
 
     // Regular expression to match against urls.
     // This pattern matching will allow you to accurately specify
