@@ -9,18 +9,31 @@ hash("").on("change", function(evt) {
 });
 ```
 
-2) Exact match.<br>
-Will match exact urls. E.g.
+2) Exact match. <br>
+Will match exact urls.  E.g.
 
 ``` javascript
 // home, will match
+// /home/, will match.  Notice the slashes don't affect pattern matching.
 // home/sweet, will not match
 hash("home").on("change", function(evt) {
   console.log(arguments);
 });
 ```
 
-3) : parameter values.<br>
+3) Exact match with slashes.
+
+``` javascript
+// home, will not match
+// home/, will match.
+// home/sweet, will not match
+hash("home/").on("change", function(evt) {
+  console.log(arguments);
+});
+```
+
+
+4) : parameter values.<br>
 Will match the url patterns, extracting and returning the parameter values. E.g.
 
 ``` javascript
@@ -30,7 +43,7 @@ hash("home/u:val1/:val2").on("change", function(evt, val1, val2) {
 });
 ```
 
-4) *: optional parameter values.<br>
+5) *: optional parameter values.<br>
 Will match patterns returning whatever parameters are found. If a paramter isn't found, the match is will be successfull but the unmatched data isn't returned. E.g.
 
 ``` javascript
@@ -42,19 +55,19 @@ hash("home/*u:val1/*:val2").on("change", function(evt) {
 });
 ```
 
-5) **: whole parameter value.<br>
+6) **: whole parameter value.<br>
 Will return the whole paramater. E.g.<br>
 
 ``` javascript
 // home -> val1 = "", val2 = ""
 // home/magic -> val1 = "magic"
 // home/magic/books -> val1 = "magic/books"
-hash("home/**:val1").on("change", function(evt) {
+hash("home/**:val1").on("change", function(evt, val1) {
   console.log(arguments);
 });
 ```
 
-6) /** Wild card<br>
+7) /** Wild card<br>
 Will match anything
 
 ``` javascript
