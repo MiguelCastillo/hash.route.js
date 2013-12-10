@@ -3,7 +3,7 @@
 
 define(function(require, exports, module) {
 
-  var hash = require("mortar/hash");
+  var hash = require("mortar/hash.route");
 
   // Match empty route
   hash("").on("change", function(evt) {
