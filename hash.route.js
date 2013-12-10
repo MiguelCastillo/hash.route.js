@@ -198,7 +198,7 @@
     enabled = false;
 
     if ( "onhashchange" in self ) {
-      $(self).off("hashchange", hashchanged);
+      $(self).off("hashchange", throttlechange);
       clearTimeout(interval);
     }
     else {
