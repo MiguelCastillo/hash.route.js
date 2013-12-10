@@ -2,7 +2,7 @@
  * Copyright (c) 2013 Miguel Castillo.
  * Licensed under MIT
  *
- * https://github.com/MiguelCastillo/hash.js
+ * https://github.com/MiguelCastillo/hash.route.js
  */
 
 
@@ -18,23 +18,7 @@
 (function( $ ) {
   "use strict";
 
-  var wildCard = {
-        "regex":/\/\*\*/g,
-        "rule": "(?:.*)"
-      },
-      wholeValue = {
-        "regex":/\*\*\w*:\w+/g,
-        "rule": "(.*)"
-      },
-      optionalValue = {
-        "regex": /\*\w*:\w+/g,
-        "rule": "([^/]*)"
-      },
-      nameValue = {
-        "regex": /\w*:\w+/g,
-        "rule": "([^/]+)"
-      },
-      oldHash = "",
+  var oldHash = "",
       newHash = "",
       enabled = false,
       interval = false,
@@ -53,114 +37,11 @@
     }
 
     if ( options.pattern in hashes === false ) {
-      hashes[options.pattern] = hash.route(options);
+      hashes[options.pattern] = new hash.route(options);
     }
 
     return hashes[options.pattern];
   }
-
-
-  hash.route = function(options) {
-    var instance = $({});
-
-    //
-    // String used for building up the regexp matches url patterns.
-    // Regex tester: http://jsregex.com/
-    //
-    var matchString = ('' + options.pattern)
-      .replace(wholeValue.regex, function(match) {
-        return match.substr(0, match.indexOf(':')) + wholeValue.rule;
-      })
-      .replace(optionalValue.regex, function(match) {
-        return match.substr(0, match.indexOf(':')) + optionalValue.rule;
-      })
-      .replace(nameValue.regex, function(match) {
-        return match.substr(0, match.indexOf(':')) + nameValue.rule;
-      })
-      .replace(wildCard.regex, wildCard.rule);
-
-    // Regular expression to match against urls.
-    // This pattern matching will allow you to accurately specify
-    // if you want to match starting and ending slashes when configuring a
-    // hash instance.  So, if you specify a slash when configuring your hash,
-    // instance the match will test if a slash is included in the url we are
-    // testing against.  If you ommit the slash in the hash object, then the
-    // match will pass regadless of whether the matching url has a slash.  E.g.
-    //
-    // var _hash = hash("home") will match #home and #home/
-    // var _hash = hash("home/") will only match #home/
-    //
-    var matchRegExp = new RegExp("^(?:#*/*)" + matchString + "(?:/*)$");
-
-    // Flag to keep track of whether or not this route can execute
-    // matching logic
-    var enabled = true;
-
-
-    function match( uri ) {
-      if ( !enabled ) {
-        return false;
-      }
-
-      var _match = uri.match(matchRegExp);
-      if ( _match ) {
-        // The regex match logic will put the match input in the beginning
-        // of the array.  So, remove it to have a precise 1:1 match with
-        // the parameters returned to the callbacks
-        instance._lastMatch = _match.shift();
-      }
-
-      return _match;
-    }
-
-
-    function unregister() {
-      delete hashes[instance.pattern];
-    }
-
-
-    function enable(val) {
-      if ( arguments.length === 0 ) {
-        return enabled === true;
-      }
-      else {
-        enabled = val;
-      }
-    }
-
-
-    //
-    // Override the $.on method to subscribe events so that we can properly
-    // handle firing off an event with the initial value when event handlers
-    // are registered.
-    //
-    var _onEvent = instance.on;
-    function onEvent(evt, selector, func) {
-      if (typeof selector === "function") {
-        func = selector;
-      }
-
-      _onEvent.apply(instance, arguments);
-
-      var matches = instance.match('' + window.location.hash);
-      if (matches) {
-        matches.unshift( jQuery.Event( "init" ) );
-        setTimeout(function() {
-          func.apply(instance, matches);
-        }, 1);
-      }
-
-      return instance;
-    }
-
-
-    instance.match = match;
-    instance.unregister = unregister;
-    instance.enable = enable;
-    instance.pattern = options.pattern;
-    instance.on = onEvent;
-    return instance;
-  };
 
 
   // Rate at which to trigger updates whenever they exist
@@ -179,10 +60,10 @@
 
     if ( "onhashchange" in self ) {
       $(self).on("hashchange", throttlechange);
-      interval = setTimeout(hashchanged, hash.refreshRate);
+      interval = setTimeout(hashchange, hash.refreshRate);
     }
     else {
-      interval = setInterval(hashchanged, 100);
+      interval = setInterval(hashchange, 100);
     }
   };
 
@@ -216,26 +97,18 @@
 
 
   // Routine to process haschange events
-  function hashchanged () {
+  function hashchange () {
     newHash = '' + window.location.hash;
     if (newHash === oldHash) {
       return;
     }
 
     oldHash = newHash;
+    $(hash).trigger("change", newHash);
 
     // Iterate through all the hashes and fire off a change event if needed.
-    for( var i in hashes ) {
-      var _hash = hashes[i];
-      if ( _hash._lastUpdate === newHash ) {
-        continue;
-      }
-
-      _hash._lastUpdate = newHash;
-      var matches = _hash.match(newHash);
-      if ( matches ) {
-        _hash.trigger("change", matches);
-      }
+    for ( var i in hashes ) {
+      hashes[i].exec(newHash);
     }
   }
 
@@ -247,8 +120,162 @@
       clearTimeout(interval);
     }
 
-    interval = setTimeout(hashchanged, hash.refreshRate);
+    interval = setTimeout(hashchange, hash.refreshRate);
   }
+
+
+  //
+  // Match
+  //
+  function patternMatch(pattern) {
+    var rules = patternMatch.rules;
+
+    //
+    // String used for building up the regexp matches url patterns.
+    // Regex tester: http://jsregex.com/
+    //
+    var matchString = ('' + pattern)
+      .replace(rules.wholeValue.regex, function(match) {
+        return match.substr(0, match.indexOf(':')) + rules.wholeValue.rule;
+      })
+      .replace(rules.optionalValue.regex, function(match) {
+        return match.substr(0, match.indexOf(':')) + rules.optionalValue.rule;
+      })
+      .replace(rules.nameValue.regex, function(match) {
+        return match.substr(0, match.indexOf(':')) + rules.nameValue.rule;
+      })
+      .replace(rules.wildCard.regex, rules.wildCard.rule);
+
+    // Regular expression to match against urls.
+    // This pattern matching will allow you to accurately specify
+    // if you want to match starting and ending slashes when configuring a
+    // hash instance.  So, if you specify a slash when configuring your hash,
+    // instance the match will test if a slash is included in the url we are
+    // testing against.  If you ommit the slash in the hash object, then the
+    // match will pass regadless of whether the matching url has a slash.  E.g.
+    //
+    // var _hash = hash("home") will match #home and #home/
+    // var _hash = hash("home/") will only match #home/
+    //
+    var matchRegExp = new RegExp("^(?:#*/*)" + matchString + "(?:/*)$");
+
+    return function(uri) {
+      return uri.match(matchRegExp);
+    };
+  }
+
+
+  patternMatch.rules = {
+    wildCard: {
+      "regex":/\/\*\*/g,
+      "rule": "(?:.*)"
+    },
+    wholeValue: {
+      "regex":/\*\*\w*:\w+/g,
+      "rule": "(.*)"
+    },
+    optionalValue: {
+      "regex": /\*\w*:\w+/g,
+      "rule": "([^/]*)"
+    },
+    nameValue: {
+      "regex": /\w*:\w+/g,
+      "rule": "([^/]+)"
+    }
+  };
+
+
+
+  //
+  // Route
+  //
+  function route(options) {
+    var instance = $({});
+    var matchUri = patternMatch(options.pattern);
+
+
+    // Flag to keep track of whether or not this route can execute matching logic
+    var enabled = true;
+
+
+    function match( uri ) {
+      if ( !enabled ) {
+        return false;
+      }
+
+      var matches = matchUri(uri);
+      if ( matches ) {
+        // Javascript regex match will put the match input in the beginning
+        // of the matches array.  So, remove it to have a precise 1:1 match
+        // with the parameters returned to the callbacks
+        instance.lastMatch = matches.shift();
+      }
+
+      return matches;
+    }
+
+
+    function exec( uri ) {
+      var matches = match(uri);
+      if ( matches ) {
+        instance.trigger("change", matches);
+        $(hash).trigger("route:change", [instance, matches]);
+      }
+    }
+
+
+    function unregister() {
+      delete hashes[instance.pattern];
+    }
+
+
+    function enable(val) {
+      if ( arguments.length === 0 ) {
+        return enabled === true;
+      }
+      else {
+        enabled = val;
+      }
+    }
+
+
+    //
+    // Monkey patch $.on method to handle firing off an event with
+    // the initial value when event handlers are registered.
+    //
+    var _onEvent = instance.on;
+    function onEvent(evt, selector, callback) {
+      if (typeof selector === "function") {
+        callback = selector;
+        selector = '';
+      }
+
+      var matches = instance.match('' + window.location.hash);
+      if (matches) {
+        matches.unshift( jQuery.Event( "init" ) );
+        setTimeout(function() {
+          callback.apply(instance, matches);
+          $(hash).trigger("route:init", instance);
+        }, 1);
+      }
+
+      _onEvent.apply(instance, arguments);
+      return instance;
+    }
+
+
+    instance.match = match;
+    instance.exec = exec;
+    instance.unregister = unregister;
+    instance.enable = enable;
+    instance.pattern = options.pattern;
+    instance.on = onEvent;
+    return instance;
+  };
+
+
+  hash.patternMatch = patternMatch;
+  hash.route = route;
 
 
   // Let's start things enabled
