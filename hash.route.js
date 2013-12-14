@@ -29,7 +29,7 @@
   // Hash handler
   //
   function hash( options ) {
-    // Convert simple options passed is as a string to a proper options object.
+    // Convert simple options passed in as a string to a proper options object.
     if ( typeof options === "string" ) {
       options = {
         pattern: options
@@ -225,6 +225,7 @@
 
 
     function unregister() {
+      $(hashes[instance.pattern]).off();
       delete hashes[instance.pattern];
     }
 
