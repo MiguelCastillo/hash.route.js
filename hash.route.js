@@ -210,16 +210,8 @@
         // Javascript regex match will put the match input in the beginning
         // of the matches array.  So, remove it to have a precise 1:1 match
         // with the parameters returned to the callbacks
-        lastUrl = matches.shift();
-        lastMatch = matches.join("-");
-
-        // Check if the matched pattern need to trigger updates
-        if ( instance.lastMatch === lastMatch ) {
-          return;
-        }
-
-        instance.lastMatch = lastMatch;
-        instance.lastUrl = lastUrl;
+        instance.lastUrl = matches.shift();
+        instance.lastMatch = matches.join("-");
       }
       else {
         // Clear up the value to have a proper initial state when comparing
@@ -232,8 +224,12 @@
 
 
     function exec( uri ) {
-      var matches = match(uri);
-      if ( matches ) {
+      var lastMatch = instance.lastMatch,
+          matches   = match(uri);
+
+      // If there is a match and old and new match are different, then we trigger
+      // a route change.
+      if ( matches && lastMatch !== instance.lastMatch) {
         instance.triggerHandler("change", matches);
         $(hash).triggerHandler("route:change", [instance, matches]);
       }
