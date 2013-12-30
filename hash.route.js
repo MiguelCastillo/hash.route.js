@@ -103,13 +103,15 @@
       return;
     }
 
-    oldHash = newHash;
-    $(hash).trigger("change", newHash);
+    $(hash).triggerHandler("change", [newHash, oldHash]);
 
     // Iterate through all the hashes and fire off a change event if needed.
     for ( var i in hashes ) {
       hashes[i].exec(newHash);
     }
+
+    // Update hashes
+    oldHash = newHash;
   }
 
 
@@ -190,12 +192,9 @@
   // Route
   //
   function route(options) {
-    var instance = $({});
-    var matchUri = patternMatch(options.pattern);
-
-
-    // Flag to keep track of whether or not this route can execute matching logic
-    var enabled = true;
+    var instance = $({}),
+        matchUri = patternMatch(options.pattern),
+        enabled = true;
 
 
     function match( uri ) {
@@ -203,12 +202,29 @@
         return false;
       }
 
-      var matches = matchUri(uri);
+      var matches = matchUri(uri),
+          lastMatch = "",
+          lastUrl = "";
+
       if ( matches ) {
         // Javascript regex match will put the match input in the beginning
         // of the matches array.  So, remove it to have a precise 1:1 match
         // with the parameters returned to the callbacks
-        instance.lastMatch = matches.shift();
+        lastUrl = matches.shift();
+        lastMatch = matches.join("-");
+
+        // Check if the matched pattern need to trigger updates
+        if ( instance.lastMatch === lastMatch ) {
+          return;
+        }
+
+        instance.lastMatch = lastMatch;
+        instance.lastUrl = lastUrl;
+      }
+      else {
+        // Clear up the value to have a proper initial state when comparing
+        // last match again
+        instance.lastMatch = undefined;
       }
 
       return matches;
@@ -218,8 +234,8 @@
     function exec( uri ) {
       var matches = match(uri);
       if ( matches ) {
-        instance.trigger("change", matches);
-        $(hash).trigger("route:change", [instance, matches]);
+        instance.triggerHandler("change", matches);
+        $(hash).triggerHandler("route:change", [instance, matches]);
       }
     }
 
@@ -256,7 +272,7 @@
         matches.unshift( jQuery.Event( "init" ) );
         setTimeout(function() {
           callback.apply(instance, matches);
-          $(hash).trigger("route:init", instance);
+          $(hash).triggerHandler("route:init", instance);
         }, 1);
       }
 
