@@ -257,7 +257,11 @@
     // the initial value when event handlers are registered.
     //
     var _onEvent = instance.on;
-    function onEvent(evt, selector, callback) {
+    function onEvent(/*evt, selector, callback*/) {
+      var evt      = arguments[0],
+          selector = arguments[1],
+          callback = arguments[2];
+
       if (typeof selector === "function") {
         callback = selector;
         selector = '';
