@@ -1,4 +1,4 @@
-hash.js, a simple and flexible routing system.
+hash.route.js, a simple and flexible routing system.
 ====
 
 1) Empty match.<br>
