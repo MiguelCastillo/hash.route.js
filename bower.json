@@ -1,0 +1,22 @@
+{
+  "name": "hash.route",
+  "main": "hash.route.js",
+  "version": "0.5.0",
+  "homepage": "https://github.com/MiguelCastillo/hash.route.js",
+  "authors": [
+    "Miguel Castillo <manchagnu@gmail.com>"
+  ],
+  "description": "Simple hash routing system",
+  "keywords": [
+    "route",
+    "router"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
