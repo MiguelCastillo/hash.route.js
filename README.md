@@ -86,3 +86,11 @@ hash("home/**/:val1").on("change", function(evt) {
   console.log(arguments);
 });
 ```
+
+
+Install
+===============
+``` shell
+bower install hash.route
+```
+Or just get directly from git
