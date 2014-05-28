@@ -103,7 +103,7 @@ Events that are triggered are:
 How do events work?
 ====
 
-When a route listeners for <code>enter</code> and <code>change</code> are registered, logic for matching the route pattern is executed.  If a match occurs, an init event is immediately executed with the correspoding matching results.  Any further changes that still match the pattern will trigger a <code>change</code> event.  When a route transitions from matching to not matching, a <code>leave</code> is triggered, which is generally a good spot to ungerister listeners.
+When route listeners for <code>enter</code> and <code>change</code> are registered, logic for matching the route pattern is executed.  If a match occurs, an init event is immediately executed with the correspoding matching results.  Any further changes that still match the pattern will trigger a <code>change</code> event.  When a route transitions from matching to not matching, a <code>leave</code> is triggered, which is generally a good spot to ungerister listeners.
 
 
 Install
