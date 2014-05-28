@@ -90,7 +90,7 @@ hash("home/**/:val1").on("change", function(evt) {
 });
 ```
 
-What events are available:
+What events are available?
 ====
 
 Events that are triggered are:
