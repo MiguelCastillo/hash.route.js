@@ -97,7 +97,7 @@ Events that are triggered are:
 
 <code>enter</code> which happens when a route pattern is matched for the firts time.<br>
 <code>change</code> which happens when an already matched route pattern changes to a different value that still matches the pattern.<br>
-<code>leave</code> which happens when a currently matched pattern changes to a value that no longer matches the route pattern.  This is useful for coordinating when to clean up route listeners.
+<code>leave</code> which happens when a currently matched pattern changes to a value that no longer matches the route pattern.  This is useful for coordinating house keeping.
 
 
 How do events work?
