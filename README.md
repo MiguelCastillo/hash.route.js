@@ -1,5 +1,5 @@
-hash.route.js, a simple and flexible routing system.
-====
+hash.route.js, a simple and flexible routing system.<br>
+
 
 Setting up hash route listeners and different matching rules:
 ====
@@ -36,7 +36,7 @@ hash("home/").on("change", function(evt) {
 ```
 
 
-4) : parameter values.<br>
+4) <code>:</code> parameter values.<br>
 Will match the url patterns, extracting and returning the parameter values. E.g.
 
 ``` javascript
@@ -46,7 +46,7 @@ hash("home/u:val1/:val2").on("change", function(evt, val1, val2) {
 });
 ```
 
-5) *: optional parameter values.<br>
+5) <code>*:</code> optional parameter values.<br>
 Will match patterns returning whatever parameters are found. If a paramter isn't found, the match will be successful but the unmatched data is omitted. E.g.
 
 ``` javascript
@@ -58,7 +58,7 @@ hash("home/*u:val1/*:val2").on("change", function(evt) {
 });
 ```
 
-6) **: whole parameter value.<br>
+6) <code>**:</code> whole parameter value.<br>
 Will return the entire matched paramater. E.g.<br>
 
 ``` javascript
@@ -70,7 +70,7 @@ hash("home/**:val1").on("change", function(evt, val1) {
 });
 ```
 
-7) /** Wild card<br>
+7) <code>/**</code> Wild card<br>
 Will match anything, and omit any wild card matched values.
 
 ``` javascript
