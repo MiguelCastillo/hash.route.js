@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2013 Miguel Castillo.
  * Licensed under MIT
  *
@@ -20,8 +20,8 @@
 
   var oldHash = "",
       newHash = "",
-      enabled = false,
       interval = false,
+      hashChangeAvailable = "onhashchange" in self,
       hashes = {};
 
 
@@ -51,54 +51,56 @@
   //
   // Enable the entire hashing operation
   //
-  hash.enable = function(val) {
-    if ( enabled ) {
-      return;
-    }
-
-    enabled = true;
-
-    if ( "onhashchange" in self ) {
-      $(self).on("hashchange", throttlechange);
-      interval = setTimeout(hashchange, hash.refreshRate);
-    }
-    else {
-      interval = setInterval(hashchange, 100);
-    }
+  hash.enable = function() {
+    hashChange.enable();
   };
 
 
   //
   // Disable the entire hashing operation
   //
-  hash.disable = function(val) {
-    if ( enabled === false ) {
-      return;
-    }
-
-    enabled = false;
-
-    if ( "onhashchange" in self ) {
-      $(self).off("hashchange", throttlechange);
-      clearTimeout(interval);
-    }
-    else {
-      clearInterval(interval);
-    }
+  hash.disable = function() {
+    hashChange.disable();
   };
 
 
   //
   // Allow navigation from hash
   //
-  hash.navigate = function(route) {
-    window.location.hash = route;
+  hash.navigate = function(hash) {
+    setHash(hash);
   };
 
 
-  // Routine to process haschange events
-  function hashchange () {
-    newHash = '' + window.location.hash;
+  /**
+  * returns a normalized hash
+  */
+  function getHash() {
+    return normalizeHash(window.location.hash);
+  }
+
+
+  /**
+  * Sets a normalized hash
+  */
+  function setHash(hash) {
+    window.location.hash = normalizeHash(hash);
+  }
+
+
+  /**
+  * Normalizes the incoming hash to make sure the "#" is removed if one exists
+  */
+  function normalizeHash(hash) {
+    return (hash || "").replace(/^[\s|\/|#]*/, "");
+  }
+
+
+  /**
+  * Routine to process haschange events
+  */
+  function hashChange () {
+    newHash = getHash();
     if (newHash === oldHash) {
       return;
     }
@@ -115,20 +117,87 @@
   }
 
 
-  // Throttle update events to prevent flooding the hashchanged handler with
-  // messages.
-  function throttlechange() {
+  /**
+  * Flag to keep track if hashChange tracking is enabled/disabled.
+  */
+  hashChange.enabled = false;
+
+
+  /**
+  * Enable tracking of hash changes
+  */
+  hashChange.enable = (function() {
+    var enable;
+
+    if ( hashChangeAvailable ) {
+      enable = function() {
+        $(self).on("hashchange", throttleHashChange);
+        interval = setTimeout(hashChange, hash.refreshRate);
+      };
+    }
+    else {
+      enable = function() {
+        interval = setInterval(hashChange, 100);
+      };
+    }
+
+    return function() {
+      if ( hashChange.enabled ) {
+        return;
+      }
+
+      hashChange.enabled = true;
+      enable();
+    };
+  })();
+
+
+  /**
+  * Disable tracking of hash changes
+  */
+  hashChange.disable = (function() {
+    var disable;
+
+    if ( hashChangeAvailable ) {
+      disable = function() {
+        $(self).off("hashchange", throttleHashChange);
+        clearTimeout(interval);
+      };
+    }
+    else {
+      disable = function () {
+        clearInterval(interval);
+      };
+    }
+
+    return function () {
+      if ( hashChange.enabled === false ) {
+        return;
+      }
+
+      hashChange.enabled = false;
+      disable();
+    };
+  })();
+
+
+  /**
+  * Throttle update events to prevent flooding the hashchanged handler with
+  * messages.
+  */
+  function throttleHashChange() {
     if ( interval ) {
       clearTimeout(interval);
     }
 
-    interval = setTimeout(hashchange, hash.refreshRate);
+    interval = setTimeout(hashChange, hash.refreshRate);
   }
 
 
-  //
-  // Match
-  //
+  /**
+  * Pattern matching building logic.  This is just a collection of rules used to determine
+  * how patterns are matched and what needs to be extracted out when a pattern matches.
+  */
   function patternMatch(pattern) {
     var rules = patternMatch.rules;
 
@@ -188,13 +257,15 @@
 
 
 
-  //
-  // Route
-  //
+  /**
+  * Route handler.  This is where all the setup and matching magic happens
+  */
   function route(options) {
-    var instance = $({}),
-        matchUri = patternMatch(options.pattern),
-        enabled = true;
+    var instance  = $({}),
+        matchUri  = hash.patternMatch(options.pattern),
+        currMatch = null,
+        prevMatch = null,
+        enabled   = true;
 
 
     function match( uri ) {
@@ -202,21 +273,21 @@
         return false;
       }
 
-      var matches = matchUri(uri),
-          lastMatch = "",
-          lastUrl = "";
+      var matches = matchUri(uri);
+      prevMatch   = currMatch;
 
       if ( matches ) {
         // Javascript regex match will put the match input in the beginning
         // of the matches array.  So, remove it to have a precise 1:1 match
         // with the parameters returned to the callbacks
-        instance.lastUrl = matches.shift();
-        instance.lastMatch = matches.join("-");
+        instance.currUrl = matches.shift();
+        currMatch        = matches.join("-");
       }
       else {
         // Clear up the value to have a proper initial state when comparing
         // last match again
-        instance.lastMatch = undefined;
+        instance.currUrl = null;
+        currMatch        = null;
       }
 
       return matches;
@@ -224,14 +295,22 @@
 
 
     function exec( uri ) {
-      var lastMatch = instance.lastMatch,
-          matches   = match(uri);
+      var matches = match(uri);
 
       // If there is a match and old and new match are different, then we trigger
       // a route change.
-      if ( matches && lastMatch !== instance.lastMatch) {
+      if ( matches && prevMatch !== currMatch ) {
+        if ( prevMatch === null ) {
+          instance.triggerHandler("enter", matches);
+          $(hash).triggerHandler("route:enter", [instance, matches]);
+        }
+
         instance.triggerHandler("change", matches);
         $(hash).triggerHandler("route:change", [instance, matches]);
+      }
+      else if ( !matches && prevMatch !== null ) {
+        instance.triggerHandler("leave");
+        $(hash).triggerHandler("route:leave", [instance]);
       }
     }
 
@@ -247,53 +326,57 @@
         return enabled === true;
       }
       else {
-        enabled = val;
+        enabled = !!val;
       }
     }
 
 
-    //
-    // Monkey patch $.on method to handle firing off an event with
-    // the initial value when event handlers are registered.
-    //
-    var _onEvent = instance.on;
-    function onEvent(/*evt, selector, callback*/) {
-      var evt      = arguments[0],
-          selector = arguments[1],
-          callback = arguments[2];
+    function init(/*evt, filter, callback*/) {
+      var evtName  = arguments[0],
+          filter   = arguments[1],
+          callback = arguments[2],
+          matches  = null;
 
-      if (typeof selector === "function") {
-        callback = selector;
-        selector = '';
+      if ( typeof filter === "function" ) {
+        callback = filter;
       }
 
-      var matches = instance.match('' + window.location.hash);
-      if (matches) {
-        matches.unshift( jQuery.Event( "init" ) );
-        setTimeout(function() {
-          callback.apply(instance, matches);
-          $(hash).triggerHandler("route:init", instance);
-        }, 1);
+      if ( evtName === "enter" || evtName === "change" ) {
+        matches = instance.match( getHash() );
+
+        if (matches) {
+          matches.unshift( $.Event( "init" ) );
+
+          setTimeout(function() {
+            callback.apply(instance, matches);
+            $(hash).triggerHandler("route:" + evtName, instance);
+          }, 1);
+        }
       }
 
       _onEvent.apply(instance, arguments);
       return instance;
     }
 
+    //
+    // Monkey patch $.on method to handle firing off an event with
+    // the initial value when event handlers are registered.
+    //
+    var _onEvent = instance.on;
+    instance.on  = init;
 
-    instance.match = match;
-    instance.exec = exec;
+    instance.matchUri   = matchUri;
+    instance.match      = match;
+    instance.exec       = exec;
     instance.unregister = unregister;
-    instance.enable = enable;
-    instance.pattern = options.pattern;
-    instance.on = onEvent;
+    instance.enable     = enable;
+    instance.pattern    = options.pattern;
     return instance;
-  };
+  }
 
 
   hash.patternMatch = patternMatch;
-  hash.route = route;
-
+  hash.route        = route;
 
   // Let's start things enabled
   hash.enable(true);
