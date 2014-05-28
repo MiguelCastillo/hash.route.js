@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2013 Miguel Castillo.
  * Licensed under MIT
  *
@@ -207,7 +207,7 @@
     //
     var matchString = ('' + pattern)
       .replace(rules.wholeValue.regex, function(match) {
-        return match.substr(0, match.indexOf(':')) + rules.wholeValue.rule;
+        return match.substr(0, match.indexOf('/')) + rules.wholeValue.rule;
       })
       .replace(rules.optionalValue.regex, function(match) {
         return match.substr(0, match.indexOf(':')) + rules.optionalValue.rule;
