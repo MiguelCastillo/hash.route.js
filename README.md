@@ -4,6 +4,8 @@ hash.route.js, a simple and flexible routing system.<br>
 Setting up hash route listeners and different matching rules:
 ====
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/MiguelCastillo/hash.route.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 1) Empty match.<br>
 ``` javascript
 // Match empty route
